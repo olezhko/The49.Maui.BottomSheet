@@ -12,7 +12,8 @@
 		<!-- Do not warn about Microsoft.Maui.Controls and Microsoft.Maui.Controls.Compatibility anymore -->
 		<SkipValidateMauiImplicitPackageReferences>true</SkipValidateMauiImplicitPackageReferences>
 
-		<VersionPrefix>8.0.3</VersionPrefix>
+		<VersionPrefix>9.0.0</VersionPrefix>
+		<VersionSuffix></VersionSuffix>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
