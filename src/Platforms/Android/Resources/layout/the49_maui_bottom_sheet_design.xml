@@ -38,11 +38,13 @@
 
 		<FrameLayout
 			android:id="@+id/design_bottom_sheet"
-			style="@style/Widget.Material3.BottomSheet.Modal"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:layout_gravity="center_horizontal|top"
-			app:layout_behavior="@string/bottom_sheet_behavior" />
+			app:behavior_hideable="false"
+			app:behavior_peekHeight="56dp"
+			android:background="@color/white"
+			app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior" />
 
 	</androidx.coordinatorlayout.widget.CoordinatorLayout>
 
