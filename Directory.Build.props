@@ -15,8 +15,4 @@
     <MauiPlatformTargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(StandardTargetFramework);$(AndroidTargetFramework);$(IosTargetFramework);$(MacTargetFramework);$(WindowsTargetFramework)</MauiPlatformTargetFrameworks>
   </PropertyGroup>
 
-  <ItemGroup Condition=" $(UseMaui) == 'true' ">
-    <PackageVersion Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)"/>
-    <PackageVersion Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
-  </ItemGroup>
 </Project>
