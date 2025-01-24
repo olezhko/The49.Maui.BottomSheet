@@ -8,9 +8,14 @@
     Shell.NavBarIsVisible="False">
 
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Title="First"
+        ContentTemplate="{DataTemplate local:FirstPage}"
+        Route="FirstPage" />
+
+    <!--  <ShellContent  -->
+    <!--  Title="Sample"  -->
+    <!--  ContentTemplate="{DataTemplate local:MainPage}"  -->
+    <!--  Route="MainPage" />  -->
 
     <FlyoutItem>
         <ShellContent ContentTemplate="{DataTemplate local:ModalPage}" Route="ModalPage" />
