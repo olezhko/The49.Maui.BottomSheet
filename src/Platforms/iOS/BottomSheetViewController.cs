@@ -1,6 +1,9 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Foundation;
+using Microsoft.Maui;
 using Microsoft.Maui.Platform;
 using UIKit;
 
@@ -58,10 +61,11 @@ public class BottomSheetViewController : UIViewController
 
     public void Layout()
     {
+        Debug.WriteLine("Layout");
         _sheet.CachedDetents.Clear();
         if (OperatingSystem.IsIOSVersionAtLeast(16))
         {
-            SheetPresentationController.InvalidateDetents();
+            SheetPresentationController?.InvalidateDetents();
         }
     }
     internal void UpdateBackground()
@@ -92,7 +96,7 @@ public class BottomSheetViewController : UIViewController
         {
             return UISheetPresentationControllerDetentIdentifier.Large;
         }
-        else if (d is RatioDetent ratioDetent && ratioDetent.Ratio == .5)
+        else if (d is RatioDetent)
         {
             return UISheetPresentationControllerDetentIdentifier.Medium;
         }

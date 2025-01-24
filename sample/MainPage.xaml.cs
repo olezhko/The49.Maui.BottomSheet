@@ -272,7 +272,7 @@ public partial class MainPage : ContentPage
         var page = new SimplePage();
         page.Detents = new DetentsCollection()
         {
-            new RatioDetent() { Ratio = .6f },
+            new RatioDetent() { Ratio = .8f },
         };
         page.ShowAsync(Window);
     }
@@ -442,12 +442,20 @@ public partial class MainPage : ContentPage
 
     private void list_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        var item = (DemoEntry)list.SelectedItem;
-        if (item == null)
+        if (sender is not CollectionView collectionView)
         {
             return;
         }
-        item.Command.Execute(null);
+
+        var item = collectionView.SelectedItem as DemoEntry;
+
+        if (item is not null)
+        {
+            item.Command.Execute(null);
+        }
+
+        // Unselect so we can tap the same row multiple times!
+        collectionView.SelectedItem = null;
     }
 
     void list_Scrolled(object sender, ItemsViewScrolledEventArgs e)

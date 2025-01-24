@@ -37,9 +37,18 @@ internal class BottomSheetContainer : UIView
     {
         base.LayoutSubviews();
         var h = CalculateTallestDetent(_sheet.Window.Height - BottomSheetManager.KeyboardHeight);
-        _view.Frame = new CGRect(0, 0, Bounds.Width, h);
-        _sheet.Arrange(_view.Frame.ToRectangle());
-        _sheet.Controller.Layout();
+
+        // Convert to int to roughly check whether heights match & avoid doing as a double...
+        var frameHeightInt = Convert.ToInt32(_view.Frame.Height);
+        var hInt = Convert.ToInt32(h);
+
+        // If we don't guard here, there will be an infinite layout loop for certain detents...
+        if (frameHeightInt != hInt)
+        {
+            _view.Frame = new CGRect(0, 0, Bounds.Width, h);
+            _sheet.Arrange(_view.Frame.ToRectangle());
+            _sheet.Controller.Layout();
+        }
     }
 }
 
