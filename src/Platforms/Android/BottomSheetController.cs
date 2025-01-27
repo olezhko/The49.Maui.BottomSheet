@@ -8,6 +8,9 @@ using Google.Android.Material.BottomSheet;
 using Android.Util;
 using Microsoft.Maui.Platform;
 using AView = Android.Views.View;
+using Android.Content.Res;
+using Android.Graphics.Drawables;
+using Google.Android.Material.Color;
 
 namespace The49.Maui.BottomSheet;
 
@@ -20,6 +23,8 @@ public class BottomSheetController
     private BottomSheetDragHandleView? _handle;
     private readonly BottomSheetCallback _bottomSheetCallback;
     private readonly IDialogInterfaceOnDismissListener _dismissListener;
+    private FrameLayout _bottomSheetContainer;
+    bool? _isBackgroundLight;
 
     public BottomSheetController(IMauiContext mauiContext, BottomSheet sheet)
     {
@@ -68,19 +73,19 @@ public class BottomSheetController
 
         // Initialize the bottom sheet content
         var containerView = _sheet.ToPlatform(_mauiContext); // Get the Maui view as a native Android view
-        var bottomSheetContainer = rootView.FindViewById<FrameLayout>(Resource.Id.design_bottom_sheet);
+        _bottomSheetContainer = rootView.FindViewById<FrameLayout>(Resource.Id.design_bottom_sheet);
 
-        if (bottomSheetContainer != null && containerView != null)
+        if (_bottomSheetContainer != null && containerView != null)
         {
-            bottomSheetContainer.RemoveAllViews();
+            _bottomSheetContainer.RemoveAllViews();
             
             if (_sheet.HasHandle)
             {
                 var handle = CreateHandle();
-                bottomSheetContainer.AddView(handle, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
+                _bottomSheetContainer.AddView(handle, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
             }
-            
-            bottomSheetContainer.AddView(containerView);
+
+            _bottomSheetContainer.AddView(containerView);
             
             // Set the dialog content
             _dialog.SetContentView(rootView);
@@ -92,6 +97,8 @@ public class BottomSheetController
                 _behavior = BottomSheetBehavior.From(bottomSheet);
                 ConfigureBehavior(_behavior);
             }
+
+            UpdateBackground();
         }
 
         if (!animated)
@@ -212,5 +219,67 @@ public class BottomSheetController
             _dialog.Behavior.RemoveBottomSheetCallback(_bottomSheetCallback);
         }
     }
+
+    #region Handler Methods
+
+    public void UpdateBackground()
+    {
+        if (_sheet is null || _bottomSheetContainer is null)
+        {
+            return;
+        }
+
+        Paint paint = _sheet.BackgroundBrush;
+        if (_bottomSheetContainer is not null)
+        {
+            if (_sheet.CornerRadius != -1)
+            {
+                SheetRadiusDrawable drawable;
+                if (_bottomSheetContainer.Background is not SheetRadiusDrawable)
+                {
+                    drawable = new SheetRadiusDrawable();
+                    _bottomSheetContainer.Background = drawable;
+                }
+                else
+                {
+                    drawable = (SheetRadiusDrawable)_bottomSheetContainer.Background;
+                }
+                drawable.SetCornerRadius(_bottomSheetContainer.Context.ToPixels(_sheet.CornerRadius));
+            }
+            if (paint is not null)
+            {
+                var platformColor = paint.ToColor().ToPlatform();
+                if (_bottomSheetContainer.Background is SheetRadiusDrawable sheetDrawable)
+                {
+                    sheetDrawable.SetColor(platformColor);
+                }
+                else
+                {
+                    _bottomSheetContainer.BackgroundTintList = ColorStateList.ValueOf(platformColor);
+                }
+            }
+        }
+        // Try to find the background color to automatically change the status bar icons so they will
+        // still be visible when the bottomsheet slides underneath the status bar.
+        ColorStateList backgroundTint = ViewCompat.GetBackgroundTintList(_bottomSheetContainer);
+
+        if (backgroundTint != null)
+        {
+            // First check for a tint
+            _isBackgroundLight = MaterialColors.IsColorLight(backgroundTint.DefaultColor);
+        }
+        else if (_bottomSheetContainer.Background is ColorDrawable)
+        {
+            // Then check for the background color
+            _isBackgroundLight = MaterialColors.IsColorLight(((ColorDrawable)_bottomSheetContainer.Background).Color);
+        }
+        else
+        {
+            // Otherwise don't change the status bar color
+            _isBackgroundLight = null;
+        }
+    }
+
+    #endregion Handler Methods
 }
 
