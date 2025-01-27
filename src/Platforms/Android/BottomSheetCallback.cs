@@ -5,18 +5,15 @@ namespace The49.Maui.BottomSheet;
 
 public class BottomSheetCallback : BottomSheetBehavior.BottomSheetCallback
 {
-    readonly BottomSheet _page;
-
+    private readonly WeakEventManager _eventManager = new();
+    
     public event EventHandler StateChanged;
-    public BottomSheetCallback(BottomSheet page) : base()
-    {
-        _page = page;
-    }
+    
     public override void OnSlide(AView bottomSheet, float newState)
     {}
 
     public override void OnStateChanged(AView view, int newState)
     {
-        StateChanged?.Invoke(this, EventArgs.Empty);
+        _eventManager.HandleEvent(this, EventArgs.Empty, nameof(StateChanged));
     }
 }

@@ -423,7 +423,7 @@ public partial class MainPage : ContentPage
         page.HasBackdrop = true;
         page.Showing += (s, e) =>
         {
-            page.Controller.Behavior.DisableShapeAnimations();
+            // page.Controller.Behavior.DisableShapeAnimations();
         };
         page.ShowAsync(Window);
     }

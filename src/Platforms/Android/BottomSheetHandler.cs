@@ -4,7 +4,7 @@ public partial class BottomSheetHandler
 {
     public static void MapBackground(BottomSheetHandler handler, BottomSheet sheet)
     {
-        sheet.Controller.UpdateBackground();
+        // sheet.Controller.UpdateBackground();
     }
     partial void PlatformUpdateHandleColor(BottomSheet view)
     {
@@ -18,21 +18,21 @@ public partial class BottomSheetHandler
 
     partial void PlatformUpdateSelectedDetent(BottomSheet view)
     {
-        view.Controller.UpdateSelectedDetent();
+        // view.Controller.UpdateSelectedDetent();
     }
 
     partial void PlatformMapSelectedDetent(BottomSheet view)
     {
-        view.Controller.UpdateStateFromDetent();
+        // view.Controller.UpdateStateFromDetent();
     }
 
     partial void PlatformUpdateHasBackdrop(BottomSheet view)
     {
-        view.Controller.UpdateHasBackdrop();
+        // view.Controller.UpdateHasBackdrop();
     }
 
     partial void PlatformUpdateCornerRadius(BottomSheet view)
     {
-        view.Controller.UpdateBackground();
+        // view.Controller.UpdateBackground();
     }
 }
