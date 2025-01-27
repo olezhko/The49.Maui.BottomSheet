@@ -99,6 +99,7 @@ public class BottomSheetController
             }
 
             UpdateBackground();
+            UpdateHasBackdrop();
         }
 
         if (!animated)
@@ -147,7 +148,7 @@ public class BottomSheetController
         }
         else
         {
-            _dialog.Cancel(); // Immediate dismissal without animation
+            _dialog.Cancel();
         }
 
         _dialog = null;
@@ -156,15 +157,13 @@ public class BottomSheetController
 
     private void ConfigureBehavior(BottomSheetBehavior behavior)
     {
-        // Calculate available height for the bottom sheet
         var maxHeight = GetAvailableHeight();
         var density = DeviceDisplay.MainDisplayInfo.Density;
 
-        // Configure the BottomSheetBehavior
-        behavior.PeekHeight = (int)(maxHeight * density); // Set peek height based on screen height
-        behavior.Hideable = _sheet.IsCancelable; // Allow hiding if cancelable
-        behavior.FitToContents = true; // Ensure it fits to the content
-        behavior.State = BottomSheetBehavior.StateCollapsed; // Start in collapsed state
+        behavior.PeekHeight = (int)(maxHeight * density);
+        behavior.Hideable = _sheet.IsCancelable;
+        behavior.FitToContents = true;
+        behavior.State = BottomSheetBehavior.StateCollapsed;
     }
 
     private double GetAvailableHeight()
@@ -180,7 +179,7 @@ public class BottomSheetController
             return metrics.HeightPixels / density;
         }
 
-        return 600; // Default height if unable to calculate
+        return 600;
     }
 
     private BottomSheetDragHandleView CreateHandle()
@@ -280,6 +279,24 @@ public class BottomSheetController
         }
     }
 
+    public void UpdateHasBackdrop()
+    {
+        if (_sheet is null || _dialog is null || _dialog.Window is null)
+        {
+            return;
+        }
+
+        var window = _dialog.Window;
+
+        if (_sheet.HasBackdrop)
+        {
+            window.AddFlags(WindowManagerFlags.DimBehind);
+        }
+        else
+        {
+            window.ClearFlags(WindowManagerFlags.DimBehind);
+        }
+    }
+
     #endregion Handler Methods
 }
-

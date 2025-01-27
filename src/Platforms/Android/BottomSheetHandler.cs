@@ -4,7 +4,7 @@ public partial class BottomSheetHandler
 {
     public static void MapBackground(BottomSheetHandler handler, BottomSheet sheet)
     {
-        // sheet.Controller.UpdateBackground();
+         sheet.Controller.UpdateBackground();
     }
     partial void PlatformUpdateHandleColor(BottomSheet view)
     {
@@ -28,7 +28,7 @@ public partial class BottomSheetHandler
 
     partial void PlatformUpdateHasBackdrop(BottomSheet view)
     {
-        // view.Controller.UpdateHasBackdrop();
+         view.Controller.UpdateHasBackdrop();
     }
 
     partial void PlatformUpdateCornerRadius(BottomSheet view)
