@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows.Input;
 
 namespace The49.Maui.BottomSheet.Sample.DemoPages;
@@ -42,7 +43,31 @@ public partial class SimplePage : BottomSheet
     public SimplePage()
     {
         InitializeComponent();
+        
+        this.Showing += OnShowing;
+        this.Shown += OnShown;
+        this.Dismissed += OnDismissed;
     }
+
+    private void OnShowing(object? sender, EventArgs e)
+    {
+        Debug.WriteLine("Showing");
+    }
+    
+    private void OnShown(object? sender, EventArgs e)
+    {
+        Debug.WriteLine("Shown");
+    }
+    
+    private void OnDismissed(object? sender, DismissOrigin e)
+    {
+        Debug.WriteLine($"Dismissed, origin: {e}");
+        
+        this.Showing -= OnShowing;
+        this.Shown -= OnShown;
+        this.Dismissed -= OnDismissed;
+    }
+
 
     void Resize()
     {

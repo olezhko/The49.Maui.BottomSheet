@@ -1,4 +1,5 @@
-﻿using Android.Views;
+﻿using System.Diagnostics;
+using Android.Views;
 using Android.Widget;
 using Android.Content;
 using AndroidX.Core.View;
@@ -18,6 +19,7 @@ public class BottomSheetController
     private BottomSheetDialog? _dialog;
     private BottomSheetDragHandleView? _handle;
     private readonly BottomSheetCallback _bottomSheetCallback;
+    private readonly IDialogInterfaceOnDismissListener _dismissListener;
 
     public BottomSheetController(IMauiContext mauiContext, BottomSheet sheet)
     {
@@ -28,9 +30,11 @@ public class BottomSheetController
         _bottomSheetCallback.StateChanged += BottomSheetCallbackOnStateChanged;
     }
     
-    private void BottomSheetCallbackOnStateChanged(object? sender, EventArgs e)
+    private void BottomSheetCallbackOnStateChanged(object? sender, BottomSheetStateChangedEventArgs e)
     {
-        if (_behavior.State == BottomSheetBehavior.StateHidden)
+        Debug.WriteLine($"Callback state changed: {e.State}");
+        
+        if (e.State == BottomSheetBehavior.StateHidden)
         {
             Dispose();
             _sheet.NotifyDismissed();
@@ -89,12 +93,27 @@ public class BottomSheetController
                 ConfigureBehavior(_behavior);
             }
         }
+
+        if (!animated)
+        {
+            _dialog.Window.SetWindowAnimations(0);
+        }
+        
+        _dialog.Behavior.AddBottomSheetCallback(_bottomSheetCallback);
+        _dialog.DismissEvent += OnDismissed;
+        _dialog.SetCancelable(_sheet.IsCancelable);
         
         _sheet.NotifyShowing();
         _dialog.Show();
         _sheet.NotifyShown();
     }
-    
+
+    private void OnDismissed(object? sender, EventArgs e)
+    {
+        _sheet.NotifyDismissed();
+        _dialog = null;
+    }
+
     private void AdjustBottomSheetHeight(AView rootView)
     {
         var bottomSheet = rootView.FindViewById<FrameLayout>(Resource.Id.design_bottom_sheet);
@@ -112,6 +131,8 @@ public class BottomSheetController
         {
             return;
         }
+
+        _dialog.DismissEvent -= OnDismissed;
         
         if (animated)
         {
@@ -185,6 +206,11 @@ public class BottomSheetController
     {
         // _frame.LayoutChange -= OnLayoutChange;
         // _windowContainer.RemoveFromParent();
+
+        if (_dialog is not null)
+        {
+            _dialog.Behavior.RemoveBottomSheetCallback(_bottomSheetCallback);
+        }
     }
 }
 

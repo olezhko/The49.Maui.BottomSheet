@@ -3,17 +3,24 @@ using Google.Android.Material.BottomSheet;
 
 namespace The49.Maui.BottomSheet;
 
-public class BottomSheetCallback : BottomSheetBehavior.BottomSheetCallback
+internal class BottomSheetCallback : BottomSheetBehavior.BottomSheetCallback
 {
     private readonly WeakEventManager _eventManager = new();
     
-    public event EventHandler StateChanged;
-    
+    public event EventHandler<BottomSheetStateChangedEventArgs> StateChanged
+    {
+        add => _eventManager.AddEventHandler(value);
+        remove => _eventManager.RemoveEventHandler(value);
+    }
+
     public override void OnSlide(AView bottomSheet, float newState)
-    {}
+    {
+    }
 
     public override void OnStateChanged(AView view, int newState)
     {
-        _eventManager.HandleEvent(this, EventArgs.Empty, nameof(StateChanged));
+        _eventManager.HandleEvent(view, new BottomSheetStateChangedEventArgs(newState), nameof(StateChanged));
     }
 }
+
+internal record BottomSheetStateChangedEventArgs(int State);
