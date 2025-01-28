@@ -11,15 +11,15 @@ using AView = Android.Views.View;
 using Android.Content.Res;
 using Android.Graphics.Drawables;
 using Google.Android.Material.Color;
+using System.Reflection.Metadata;
 
 namespace The49.Maui.BottomSheet;
 
 public class BottomSheetController
 {
     private readonly IMauiContext _mauiContext;
-    private readonly BottomSheet _sheet;
-    private BottomSheetBehavior? _behavior;
-    private BottomSheetDialog? _dialog;
+    private readonly BottomSheet _bottomSheet;
+    private readonly BottomSheetDialog _bottomSheetDialog;
     private BottomSheetDragHandleView? _handle;
     private readonly BottomSheetCallback _bottomSheetCallback;
     private readonly IDialogInterfaceOnDismissListener _dismissListener;
@@ -29,12 +29,33 @@ public class BottomSheetController
     public BottomSheetController(IMauiContext mauiContext, BottomSheet sheet)
     {
         _mauiContext = mauiContext;
-        _sheet = sheet;
-        
+        _bottomSheet = sheet;
+
+        _bottomSheetDialog = new BottomSheetDialog(_mauiContext.Context);
+        _bottomSheetDialog.ShowEvent += OnShow;
+        _bottomSheetDialog.DismissEvent += OnDismissed;
+        _bottomSheetDialog.Behavior.MaxHeight = GetMaxHeight();
+
         _bottomSheetCallback = new BottomSheetCallback();
         _bottomSheetCallback.StateChanged += BottomSheetCallbackOnStateChanged;
     }
-    
+
+    private int GetMaxHeight()
+    {
+        return _mauiContext.Context.Resources?.DisplayMetrics?.HeightPixels ?? 0;
+    }
+
+    private void OnShow(object? sender, EventArgs e)
+    {
+        _bottomSheet.NotifyShown();
+    }
+
+    private void OnDismissed(object? sender, EventArgs e)
+    {
+        _bottomSheet.NotifyDismissed();
+        _bottomSheetDialog.Behavior.RemoveBottomSheetCallback(_bottomSheetCallback);
+    }
+
     private void BottomSheetCallbackOnStateChanged(object? sender, BottomSheetStateChangedEventArgs e)
     {
         Debug.WriteLine($"Callback state changed: {e.State}");
@@ -42,7 +63,7 @@ public class BottomSheetController
         if (e.State == BottomSheetBehavior.StateHidden)
         {
             Dispose();
-            _sheet.NotifyDismissed();
+            _bottomSheet.NotifyDismissed();
         }
 
         // UpdateSelectedDetent();
@@ -64,63 +85,51 @@ public class BottomSheetController
 
     public void Show(bool animated)
     {
-        // Create the BottomSheetDialog
-        _dialog = new BottomSheetDialog(_mauiContext.Context);
-
-        // Inflate the bottom sheet layout
         var inflater = LayoutInflater.From(_mauiContext.Context);
         var rootView = inflater.Inflate(Resource.Layout.the49_maui_bottom_sheet_design, null);
 
-        // Initialize the bottom sheet content
-        var containerView = _sheet.ToPlatform(_mauiContext); // Get the Maui view as a native Android view
+        var containerView = _bottomSheet.ToPlatform(_mauiContext); // Get the Maui view as a native Android view
         _bottomSheetContainer = rootView.FindViewById<FrameLayout>(Resource.Id.design_bottom_sheet);
 
-        if (_bottomSheetContainer != null && containerView != null)
+        _bottomSheetContainer.RemoveAllViews();
+
+        _bottomSheetContainer.SetMinimumHeight(_bottomSheetDialog.Behavior.MaxHeight);
+
+        if (_bottomSheet.HasHandle)
         {
-            _bottomSheetContainer.RemoveAllViews();
-            
-            if (_sheet.HasHandle)
-            {
-                var handle = CreateHandle();
-                _bottomSheetContainer.AddView(handle, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
-            }
-
-            _bottomSheetContainer.AddView(containerView);
-            
-            // Set the dialog content
-            _dialog.SetContentView(rootView);
-            
-            // Access and customize BottomSheetBehavior
-            var bottomSheet = _dialog.FindViewById<FrameLayout>(Resource.Id.design_bottom_sheet);
-            if (bottomSheet != null)
-            {
-                _behavior = BottomSheetBehavior.From(bottomSheet);
-                ConfigureBehavior(_behavior);
-            }
-
-            UpdateBackground();
-            UpdateHasBackdrop();
+            AddHandle();
         }
+
+        _bottomSheetContainer.AddView(containerView);
+
+        // Set the dialog content
+        _bottomSheetDialog.SetContentView(rootView);
+
+        var maxHeight = GetAvailableHeight();
+        var density = DeviceDisplay.MainDisplayInfo.Density;
+
+        _bottomSheetDialog.Behavior.PeekHeight = (int)(maxHeight * density);
+        _bottomSheetDialog.Behavior.Hideable = _bottomSheet.IsCancelable;
+        _bottomSheetDialog.Behavior.FitToContents = true;
+        _bottomSheetDialog.Behavior.State = BottomSheetBehavior.StateCollapsed;
+
+        UpdateBackground();
+        UpdateHasBackdrop();
 
         if (!animated)
         {
-            _dialog.Window.SetWindowAnimations(0);
+            _bottomSheetDialog.Window.SetWindowAnimations(0);
         }
         
-        _dialog.Behavior.AddBottomSheetCallback(_bottomSheetCallback);
-        _dialog.DismissEvent += OnDismissed;
-        _dialog.SetCancelable(_sheet.IsCancelable);
+        _bottomSheetDialog.Behavior.AddBottomSheetCallback(_bottomSheetCallback);
+        _bottomSheetDialog.DismissEvent += OnDismissed;
+        _bottomSheetDialog.SetCancelable(_bottomSheet.IsCancelable);
         
-        _sheet.NotifyShowing();
-        _dialog.Show();
-        _sheet.NotifyShown();
+        _bottomSheet.NotifyShowing();
+        _bottomSheetDialog.Show();
     }
 
-    private void OnDismissed(object? sender, EventArgs e)
-    {
-        _sheet.NotifyDismissed();
-        _dialog = null;
-    }
+    
 
     private void AdjustBottomSheetHeight(AView rootView)
     {
@@ -135,35 +144,19 @@ public class BottomSheetController
 
     public void Dismiss(bool animated)
     {
-        if (_dialog is null || !_dialog.IsShowing)
+        if (_bottomSheetDialog is null || !_bottomSheetDialog.IsShowing)
         {
             return;
         }
-
-        _dialog.DismissEvent -= OnDismissed;
-        
+      
         if (animated)
         {
-            _dialog.Dismiss();
+            _bottomSheetDialog.Dismiss();
         }
         else
         {
-            _dialog.Cancel();
+            _bottomSheetDialog.Cancel();
         }
-
-        _dialog = null;
-        _sheet.NotifyDismissed();
-    }
-
-    private void ConfigureBehavior(BottomSheetBehavior behavior)
-    {
-        var maxHeight = GetAvailableHeight();
-        var density = DeviceDisplay.MainDisplayInfo.Density;
-
-        behavior.PeekHeight = (int)(maxHeight * density);
-        behavior.Hideable = _sheet.IsCancelable;
-        behavior.FitToContents = true;
-        behavior.State = BottomSheetBehavior.StateCollapsed;
     }
 
     private double GetAvailableHeight()
@@ -182,16 +175,16 @@ public class BottomSheetController
         return 600;
     }
 
-    private BottomSheetDragHandleView CreateHandle()
+    private void AddHandle()
     {
         _handle = new BottomSheetDragHandleView(_mauiContext.Context);
 
-        if (_sheet.HandleColor is not null)
+        if (_bottomSheet.HandleColor is not null)
         {
-            _handle.SetColorFilter(_sheet.HandleColor.ToPlatform());
+            _handle.SetColorFilter(_bottomSheet.HandleColor.ToPlatform());
         }
 
-        return _handle;
+        _bottomSheetContainer.AddView(_handle, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.WrapContent));
     }
     
     
@@ -202,9 +195,9 @@ public class BottomSheetController
         {
             return;
         }
-        if (_sheet.HandleColor is not null)
+        if (_bottomSheet.HandleColor is not null)
         {
-            _handle.SetColorFilter(_sheet.HandleColor.ToPlatform());
+            _handle.SetColorFilter(_bottomSheet.HandleColor.ToPlatform());
         }
     }
     
@@ -213,9 +206,9 @@ public class BottomSheetController
         // _frame.LayoutChange -= OnLayoutChange;
         // _windowContainer.RemoveFromParent();
 
-        if (_dialog is not null)
+        if (_bottomSheetDialog is not null)
         {
-            _dialog.Behavior.RemoveBottomSheetCallback(_bottomSheetCallback);
+            _bottomSheetDialog.Behavior.RemoveBottomSheetCallback(_bottomSheetCallback);
         }
     }
 
@@ -223,15 +216,15 @@ public class BottomSheetController
 
     public void UpdateBackground()
     {
-        if (_sheet is null || _bottomSheetContainer is null)
+        if (_bottomSheet is null || _bottomSheetContainer is null)
         {
             return;
         }
 
-        Paint paint = _sheet.BackgroundBrush;
+        Paint paint = _bottomSheet.BackgroundBrush;
         if (_bottomSheetContainer is not null)
         {
-            if (_sheet.CornerRadius != -1)
+            if (_bottomSheet.CornerRadius != -1)
             {
                 SheetRadiusDrawable drawable;
                 if (_bottomSheetContainer.Background is not SheetRadiusDrawable)
@@ -243,7 +236,7 @@ public class BottomSheetController
                 {
                     drawable = (SheetRadiusDrawable)_bottomSheetContainer.Background;
                 }
-                drawable.SetCornerRadius(_bottomSheetContainer.Context.ToPixels(_sheet.CornerRadius));
+                drawable.SetCornerRadius(_bottomSheetContainer.Context.ToPixels(_bottomSheet.CornerRadius));
             }
             if (paint is not null)
             {
@@ -281,14 +274,14 @@ public class BottomSheetController
 
     public void UpdateHasBackdrop()
     {
-        if (_sheet is null || _dialog is null || _dialog.Window is null)
+        if (_bottomSheet is null || _bottomSheetDialog is null || _bottomSheetDialog.Window is null)
         {
             return;
         }
 
-        var window = _dialog.Window;
+        var window = _bottomSheetDialog.Window;
 
-        if (_sheet.HasBackdrop)
+        if (_bottomSheet.HasBackdrop)
         {
             window.AddFlags(WindowManagerFlags.DimBehind);
         }
